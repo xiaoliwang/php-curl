@@ -21,27 +21,66 @@ extension for Yii, Yii2 framework
 * setParams
 
 ### Properties
-* string response or array response
+* response
 * responseCode
 
 ## API
 ### GET
-@params
-* string $url  //the url you want to post
-* boolean $raw  //If $raw is true, you can get a response string directly. Else you can get an array encode by response json. 
+@params  
+
+* string $url  
+>the url you want to visit. 
+
+* boolean $raw  
+>if $raw is true, you can get a string of response directly. Else you can get an array encoded by json of response.
+
 @return
-* boolean $flag //the $flag shows your post request is succeed or failed.
 
+* boolean $flag  
+>the $flag shows your request is succeed or failed.
+
+@example
 ```
-public function testPost(){
-  $url = 'http://www.baidu.com';
-  $curl = new Curl;
-  if($curl -> POST($url)){
-    print_r($curl->response);
-  }else{
-    echo $curl->responseCode;
-  }
+<?php
+require('Curl.php');
+$curl = new Curl;
+$url = 'http://www.baidu.com';
+if($curl->get($url)){
+	print_r($curl->responseCode);
+	print_r($curl->response);
+}else{
+	echo 'Internal Error';
 }
+?>
 ```
 
+### POST
+@params  
 
+* string $url  
+>the url you want to visit. 
+
+* boolean $raw  
+>if $raw is true, you can get a string of response directly. Else you can get an array encoded by json of response.
+
+@return
+
+* boolean $flag  
+>the $flag shows your request is succeed or failed.  
+
+@example
+```
+<?php
+require('Curl.php');
+$curl = new Curl;
+$url = 'http://www.baidu.com';
+$formData = ['test'=>'test'];
+$curl->setParams($formData);
+if($curl->post($url)){
+	print_r($curl->responseCode);
+	print_r($curl->response);
+}else{
+	echo 'Internal Error';
+}
+?>
+```
