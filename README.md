@@ -26,6 +26,8 @@ extension for Yii, Yii2 framework
 
 ## API
 ### GET
+>send a get request. 
+
 @params  
 
 * string $url  
@@ -55,6 +57,8 @@ if($curl->get($url)){
 ```
 
 ### POST
+>send a post request. 
+
 @params  
 
 * string $url  
@@ -74,7 +78,7 @@ if($curl->get($url)){
 require('Curl.php');
 $curl = new Curl;
 $url = 'http://www.baidu.com';
-$formData = ['test'=>'test'];
+$forms = ['test'=>'test'];
 $curl->setParams($formData);
 if($curl->post($url)){
 	print_r($curl->responseCode);
@@ -84,3 +88,6 @@ if($curl->post($url)){
 }
 ?>
 ```
+
+### HEAD,PUT,DELETE
+> almost same as GET and POSt

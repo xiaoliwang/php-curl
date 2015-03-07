@@ -15,6 +15,8 @@ class Curl
 	
 	private $_options = [];
 	
+	private $_params = [];
+	
 	private $methods = ['GET','POST','PUT','DELETE','HEAD'];
 	
 	private $_defaultOptions = [
@@ -27,97 +29,119 @@ class Curl
 		CURLOPT_NOBODY => false, 
 	];
 	
-	public function setOption()
+	public function setOptions()
 	{
-		$numargs = func_num_args();
-		if($numargs === 1){
-			$arg0 = func_get_arg(0);
-			if(gettype($arg0) === 'array'){
-				foreach ($arg0 as $key => $value)
-					$this->_options[$key] = $value;
+		$arguments = func_get_args();
+		return $this->_addElements('_options',$arguments);
+	}
+	
+	public function setParams()
+	{
+		$arguments = func_get_args();
+		return $this->_addElements('_params',$arguments);
+	}
+	
+	private function _addElements($parameter,$arguments)
+	{
+		$count = count($arguments);
+		$var = &$this->$parameter;
+		if($count === 1){
+			$arg0 = $arguments[0];
+			if(is_array($arg0)){
+				$var = $arg0 + $var;
 				return $this;
 			}else{
 				throw new Exception('Argument 1 passed to '.__METHOD__.
-						' must be of the type array, '.typeof($arg0).' given'.
+						' must be of the type array, '.gettype($arg0).' given'.
 						' ,called in '.__FILE__.' on line '.__LINE__.' and defined');
 			}
-		}elseif($numargs === 2){
-			$arg0 = func_get_arg(0);
-			$arg1 = func_get_arg(1);
-			if(gettype($arg0) === 'string'){
-				$this->_options[$arg0] = $arg1;
+		}elseif($count === 2){
+			$arg0 = $arguments[0];
+			$arg1 = $arguments[1];
+			if($parameter==='_params' || 
+				(is_integer($arg0) && $parameter==='_options')){
+				$var[$arg0] = $arg1;
 				return $this;
 			}else{
 				throw new Exception('Argument 1 passed to '.__METHOD__.
-						' must be of the type string, '.typeof($arg0).' given'.
+						' must be of the type integer, '.gettype($arg0).' given'.
 						' ,called in '.__FILE__.' on line '.__LINE__.' and defined');
 			}
 		}else{
 			throw new Exception('Wrong arguments '.$numargs.' for '.__METHOD__.
 					',called in '.__FILE__.' on line '.__LINE__.' and defined');
 		}
-		
 	}
 	
-	public function unsetOption()
+	public function unsetOptions()
 	{
-		$numargs = func_num_args();
-		if($numargs === 0){
-			if(isset($this->_options))
-				$this->_options = [];
+		$arguments = func_get_args();
+		return $this->_delElements('_options',$arguments);
+	}
+	
+	public function unsetParams()
+	{
+		$arguments = func_get_args();
+		return $this->_delElements('_params',$arguments);
+	}
+	
+	private function _delElements($parameter,$arguments)
+	{
+		$count = count($arguments);
+		$var = &$this->$parameter; 
+		if($count === 0){
+			if(isset($var))
+				$var = [];
 			return $this;
+		}elseif($count === 1){
+			$arg0 = $arguments[0];
+			if(is_array($arg0)){
+				foreach ($arg0 as $key)
+					if(isset($var[$key]))
+						unset($var[$key]);
+					return $this;
+			}elseif($parameter==='_params' || 
+				(is_integer($arg0) && $parameter==='_options')){
+				if(isset($var[$arg0]))
+					unset($var[$arg0]);
+				return $this;
+			}else{
+				throw new Exception('Argument 1 passed to '.__METHOD__.
+						' must be of the type array or string, '.gettype($arg0).' given'.
+						' ,called in '.__FILE__.' on line '.__LINE__.' and defined');
+			}
+		}else{
+			throw new Exception('Wrong arguments '.$count.' for '.__METHOD__.
+					',called in '.__FILE__.' on line '.__LINE__.' and defined');
+		}
+	}
+	
+	public function getOptions()
+	{
+		$numargs = func_num_args();
+		$allOptions = $this->_options + $this->_defaultOptions;
+		if($numargs === 0){
+			return $allOptions;
 		}elseif($numargs === 1){
 			$arg0 = func_get_arg(0);
-			if(gettype($arg0) === 'string'){
-				if(isset($this->_options[$arg0]))
-					unset($this->_options[$arg0]);
-				return $this;
-			}elseif(gettype($arg0) === 'array'){
-				foreach ($arg0 as $key)
-					if(isset($this->_options[$key]))
-						unset($this->_options[$key]);
-					return $this;
-			}else{
-				throw new Exception('Argument 1 passed to '.__METHOD__.
-						' must be of the type array or string, '.typeof($arg0).' given'.
-						' ,called in '.__FILE__.' on line '.__LINE__.' and defined');
-			}
+			return isset($allOptions[$arg0]) ? $allOptions[$arg0] : false;
 		}else{
 			throw new Exception('Wrong arguments '.$numargs.' for '.__METHOD__.
 					',called in '.__FILE__.' on line '.__LINE__.' and defined');
 		}
 	}
 	
-	public function getOption()
-	{
-		$options = $this->_options + $this->_defaultOptions;
+	public function getParams(){
 		$numargs = func_num_args();
+		$params = $this->_params;
 		if($numargs === 0){
-			return $options;
+			return $params;
 		}elseif($numargs === 1){
-			if(gettype($arg0) === 'string'){
-				return isset($allOptions[$arg0]) ? $allOptions[$arg0] : false;
-			}else{
-				throw new Exception('Argument 1 passed to '.__METHOD__.
-						' must be of the type string, '.typeof($arg0).' given'.
-						' ,called in '.__FILE__.' on line '.__LINE__.' and defined');
-			}
+			$arg0 = func_get_arg(0);
+			return isset($params[$arg0]) ? $params[$arg0] : false;
 		}else{
 			throw new Exception('Wrong arguments '.$numargs.' for '.__METHOD__.
 					',called in '.__FILE__.' on line '.__LINE__.' and defined');
-		}
-	}
-	
-	public function setParams($params)
-	{
-		if(gettype($params) === 'string'){
-			$this->setOption(CURLOPT_POSTFIELDS, urlencode($params));
-		}elseif(gettype($params) === 'array'){
-			$this->setOption(CURLOPT_POSTFIELDS, $params);
-		}else{
-			throw new Exception('Argument 1 passed to '.__METHOD__.
-						' must be of the type string or array, '.typeof($arg0).' given'.
-						' ,called in '.__FILE__.' on line '.__LINE__.' and defined');
 		}
 	}
 	
@@ -126,6 +150,9 @@ class Curl
 		if(in_array($method, $this->methods, true)){
 			if(!isset($args[0])) throw new Exception('Missing argument 1 for '.__METHOD__.
 					',called in '.__FILE__.' on line '.__LINE__.' and defined');
+			if(!is_string($args[0])) throw new Exception('Argument 1 passed to '.__METHOD__.
+						' must be of the type string, '.gettype($arg0).' given'.
+						' ,called in '.__FILE__.' on line '.__LINE__.' and defined');
 			if(!isset($args[1])) $args[1] = true;
 			return $this->_httpRequest($args[0], $args[1], $method);
 		}else{
@@ -135,11 +162,19 @@ class Curl
 	
 	private function _httpRequest($url, $raw, $method)
 	{
-		$this->setOption(CURLOPT_CUSTOMREQUEST,$method);
+		$this->setOptions(CURLOPT_CUSTOMREQUEST,$method);
 	
 		if($method === 'HEAD'){
-			$this -> setOption(CURLOPT_NOBODY, true);
-			$this -> setOption(CURLOPT_HEADER, true);
+			$this -> setOptions(CURLOPT_NOBODY, true);
+			$this -> setOptions(CURLOPT_HEADER, true);
+		}
+		
+		if($method === 'HEAD' || $method === 'GET'){
+			$query = http_build_query($this->_params);
+			$url = $url."?$query";
+		}else{
+			$this -> setOptions(CURLOPT_POSTFIELDS, $this->_params);
+			$this -> setOptions(CURLOPT_HTTPHEADER,['content-type:multipart/form-data']);
 		}
 	
 		$ch = curl_init($url);
@@ -147,7 +182,6 @@ class Curl
 		$this -> response = $raw?curl_exec($ch):json_decode(curl_exec($ch));
 		$this -> responseCode = curl_getinfo($ch,CURLINFO_HTTP_CODE );
 		curl_close($ch);
-		 
 		if($this->responseCode>199 && $this->responseCode<300){
 			return true;
 		}else{
