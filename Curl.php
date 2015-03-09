@@ -169,13 +169,16 @@ class Curl
 			$this -> setOptions(CURLOPT_HEADER, true);
 		}
 		
-		if($method === 'HEAD' || $method === 'GET'){
-			$query = http_build_query($this->_params);
-			$url = $url."?$query";
-		}else{
-			$this -> setOptions(CURLOPT_POSTFIELDS, $this->_params);
-			$this -> setOptions(CURLOPT_HTTPHEADER,['content-type:multipart/form-data']);
+		if($this->_params){
+			if($method === 'HEAD' || $method === 'GET'){
+				$query = http_build_query($this->_params);
+				$url = $url."?$query";
+			}else{
+				$this -> setOptions(CURLOPT_POSTFIELDS, $this->_params);
+				$this ->_defaultOptions[CURLOPT_HTTPHEADER] = ['content-type:multipart/form-data'];
+			}
 		}
+		
 	
 		$ch = curl_init($url);
 		curl_setopt_array($ch, $this->getOptions());
