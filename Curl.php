@@ -17,16 +17,20 @@ class Curl
 	
 	private $_params = [];
 	
+	private $_cookies = [];
+	
 	private $methods = ['GET','POST','PUT','DELETE','HEAD'];
 	
 	private $_defaultOptions = [
-		CURLOPT_USERAGENT => 'Missevan Service Client',
+		CURLOPT_USERAGENT => 'TOMCAO HTTP CLIENT',
 		CURLOPT_HTTPHEADER => ['content-type:application/x-www-form-urlencoded'],
 		CURLOPT_TIMEOUT => 60, 
 		CURLOPT_CONNECTTIMEOUT => 30, 
 		CURLOPT_RETURNTRANSFER => true,
+		CURLOPT_FOLLOWLOCATION => true,
 		CURLOPT_HEADER => false, 
-		CURLOPT_NOBODY => false, 
+		CURLOPT_NOBODY => false,
+		
 	];
 	
 	public function setOptions()
@@ -39,6 +43,12 @@ class Curl
 	{
 		$arguments = func_get_args();
 		return $this->_addElements('_params',$arguments);
+	}
+	
+	public function setCookies()
+	{
+		$arguments = func_get_args();
+		return $this->_addElements('_cookies',$arguments);
 	}
 	
 	private function _addElements($parameter,$arguments)
@@ -58,7 +68,7 @@ class Curl
 		}elseif($count === 2){
 			$arg0 = $arguments[0];
 			$arg1 = $arguments[1];
-			if($parameter==='_params' || 
+			if($parameter==='_params' || $parameter==='_cookies' ||
 				(is_integer($arg0) && $parameter==='_options')){
 				$var[$arg0] = $arg1;
 				return $this;
@@ -68,7 +78,7 @@ class Curl
 						' ,called in '.__FILE__.' on line '.__LINE__.' and defined');
 			}
 		}else{
-			throw new Exception('Wrong arguments '.$numargs.' for '.__METHOD__.
+			throw new Exception('Wrong arguments '.$count.' for '.__METHOD__.
 					',called in '.__FILE__.' on line '.__LINE__.' and defined');
 		}
 	}
@@ -85,6 +95,12 @@ class Curl
 		return $this->_delElements('_params',$arguments);
 	}
 	
+	public function unsetCookies()
+	{
+		$arguments = func_get_args();
+		return $this->_delElements('_cookies',$arguments);
+	}
+	
 	private function _delElements($parameter,$arguments)
 	{
 		$count = count($arguments);
@@ -96,11 +112,13 @@ class Curl
 		}elseif($count === 1){
 			$arg0 = $arguments[0];
 			if(is_array($arg0)){
-				foreach ($arg0 as $key)
-					if(isset($var[$key]))
-						unset($var[$key]);
-					return $this;
-			}elseif($parameter==='_params' || 
+				array_map(function($key) use(&$var){
+					unset($var[$key]);
+				}, array_filter($arg0,function($key) use(&$var){
+					return isset($var[$key]);
+				}));
+				return $this;
+			}elseif($parameter==='_params' || $parameter==='_cookies' ||
 				(is_integer($arg0) && $parameter==='_options')){
 				if(isset($var[$arg0]))
 					unset($var[$arg0]);
@@ -118,29 +136,32 @@ class Curl
 	
 	public function getOptions()
 	{
-		$numargs = func_num_args();
-		$allOptions = $this->_options + $this->_defaultOptions;
-		if($numargs === 0){
-			return $allOptions;
-		}elseif($numargs === 1){
-			$arg0 = func_get_arg(0);
-			return isset($allOptions[$arg0]) ? $allOptions[$arg0] : false;
-		}else{
-			throw new Exception('Wrong arguments '.$numargs.' for '.__METHOD__.
-					',called in '.__FILE__.' on line '.__LINE__.' and defined');
-		}
+		$arguments = func_get_args();
+		return $this->_getElements('_options',$arguments);
 	}
 	
 	public function getParams(){
-		$numargs = func_num_args();
-		$params = $this->_params;
-		if($numargs === 0){
-			return $params;
-		}elseif($numargs === 1){
-			$arg0 = func_get_arg(0);
-			return isset($params[$arg0]) ? $params[$arg0] : false;
+		$arguments = func_get_args();
+		return $this->_getElements('_params',$arguments);
+	}
+	
+	public function getCookies(){
+		$arguments = func_get_args();
+		return $this->_getElements('_cookies',$arguments);
+	}
+	
+	private function _getElements($parameter,$arguments){
+		$count = count($arguments);
+		$var = &$this->$parameter;
+		if($parameter === '_options')
+			$var = $var + $this->_defaultOptions;
+		if($count === 0){
+			return $var;
+		}elseif($count === 1){
+			$arg0 = $arguments[0];
+			return isset($var[$arg0]) ? $var[$arg0] : false;
 		}else{
-			throw new Exception('Wrong arguments '.$numargs.' for '.__METHOD__.
+			throw new Exception('Wrong arguments '.$count.' for '.__METHOD__.
 					',called in '.__FILE__.' on line '.__LINE__.' and defined');
 		}
 	}
@@ -165,8 +186,8 @@ class Curl
 		$this->setOptions(CURLOPT_CUSTOMREQUEST,$method);
 	
 		if($method === 'HEAD'){
-			$this -> setOptions(CURLOPT_NOBODY, true);
-			$this -> setOptions(CURLOPT_HEADER, true);
+			$this -> _defaultOptions[CURLOPT_NOBODY] = true;
+			$this -> _defaultOptions[CURLOPT_HEADER] = true;
 		}
 		
 		if($this->_params){
@@ -179,6 +200,13 @@ class Curl
 			}
 		}
 		
+		if($this->_cookies){
+			$cookies = '';
+			array_map(function($key,$value) use(&$cookies){
+				$cookies .= "$key=$value;";
+			}, array_keys($this->_cookies),array_values($this->_cookies));
+			$this-> setOptions(CURLOPT_COOKIE, $cookies);
+		}
 	
 		$ch = curl_init($url);
 		curl_setopt_array($ch, $this->getOptions());
