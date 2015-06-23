@@ -1,17 +1,28 @@
 <?php
 /**
- * Curl wrapper PHP
+ * PHP Curl wrapper 
+ * 
+ * @category PHP
+ * @package tomcao\util
  * @author TomCao <jiepengthegreat@126.com>
+ * @copyright 2014 TomCao
+ * @lincese MIT
  * @version 1.0.0
- * @link 
- *
+ * @link https://github.com/xiaoliwang/php-curl
  */
 
+namespace tomcao\util;
 class Curl
 {
+	/**
+	 * @var string $response 发送请求后返回的response
+	 */
 	public $response = null;
 	
-	public $responseCode = null;
+	/**
+	 * @var integer $responseCode 收到的状态码，200
+	 */
+	public $responseCode = 0;
 	
 	private $_options = [];
 	
